@@ -1,4 +1,4 @@
-# GriftlandExtraCardMod
+# GriftlandsExtraCardMod
 
 A mod for Griftlands. Adds some cards with interesting concepts to the game.
 
