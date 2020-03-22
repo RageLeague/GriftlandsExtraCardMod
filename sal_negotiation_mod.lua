@@ -22,7 +22,11 @@ local CARDS =
         Reconsider = function( self, minigame, targets )
             for i, target in ipairs( targets ) do
                 local argumentResolve = target:GetResolve()
-                target:GetNegotiator():RemoveModifier( target )
+                if target.negotiator == self.negotiator then
+                    target:GetNegotiator():RemoveModifier( target )
+                else
+                    target:GetNegotiator():DestroyModifier( target, self )
+                end
                 target:GetNegotiator():RestoreResolve( argumentResolve * self.healModifier, self )
                 
             end
@@ -35,6 +39,7 @@ local CARDS =
     back_down_plus = 
     {
         name = "Sticky Back Down",
+        flavour = "'Alright, alright, I'll back down. Eventually.'",
         flags = CARD_FLAGS.DIPLOMACY | CARD_FLAGS.STICKY,
     },
     back_down_plus2 =
@@ -91,7 +96,7 @@ local CARDS =
         cost = 1,
 
         flags = CARD_FLAGS.HOSTILE,
-        rarity = CARD_RARITY.UNCOMMON,
+        rarity = CARD_RARITY.COMMON,
 
         min_persuasion = 0,
         max_persuasion = 3,
@@ -220,12 +225,78 @@ local CARDS =
         reflectionMultiplier = 1,
         modifierName = "Strong No, U",
     },
-}
---[[
-[local MODIFIERS =
-{
-    DARVO = 
+    fake_promise =
     {
+        name = "Fake Promise",
+        desc = "Create a {GAIN_SHILLS_AT_END} argument with <#UPGRADE>{1}</> stacks.",
+        icon = "negotiation/prominence.tex",
+        cost = 1,
+        desc_fn = function( self, fmt_str )
+            return loc.format( fmt_str, math.floor(self.money_cost / 5) )
+        end,
+        flags = CARD_FLAGS.MANIPULATE,
+        rarity = CARD_RARITY.COMMON,
+        money_cost = 10,
+        min_persuasion = 2,
+        max_persuasion = 7,
+        OnPostResolve = function( self, minigame, targets )
+            self.negotiator:CreateModifier("GAIN_SHILLS_AT_END", math.floor(self.money_cost / 5), self)
+        end,
+    },
+    fake_promise_plus =
+    {
+        name = "Pale Promise",
+        cost = 0,
+    },
+    fake_promise_plus2 =
+    {
+        name = "Enhanced Promise",
+        min_persuasion = 5,
+        max_persuasion = 10,
+        money_cost = 20,
+    },
+}
+---[[
+local MODIFIERS =
+{
+    GAIN_SHILLS_AT_END =
+    {
+        name = "Gain Shills At The End",
+        desc = "Gain {1#money} at the end of this negotiation for each stacks on this bounty if this bounty still exists, regardless whether you win or lose.",
+        desc_fn = function( self, fmt_str )
+            return loc.format( fmt_str, 5 )
+        end,
+
+        max_resolve = 2,
+        modifier_type = MODIFIER_TYPE.BOUNTY,
+
+        OnInit = function(self)
+            self.icon = engine.asset.Texture("negotiation/modifiers/frisk.tex")
+            --self.engine:BroadcastEvent( negotiation_defs.EVENT.UPDATE_MODIFIER_ICON, self)
+        end,
+        endGameCheck = function( self, minigame )
+            --If the game is ended, gain money equal to the stack number * 5
+            if minigame:CheckGameOver() then
+                minigame:ModifyMoney( 5 * self.stacks )
+                self:GetNegotiator():RemoveModifier( self )
+            end
+        end,
+
+        event_handlers =
+        {
+            [ EVENT.END_TURN ] = function( self, engine, negotiator )
+                self:endGameCheck(self.engine)
+            end,
+            [ EVENT.END_RESOLVE ] = function(self, minigame, card)
+                self:endGameCheck(self.engine)
+            end,
+            [ EVENT.ATTACK_RESOLVE ] = function( self, source, target, damage, params, defended )
+                self:endGameCheck(self.engine)
+            end,
+            [ EVENT.DELTA_RESOLVE ] = function( self, modifier, resolve, max_resolve, delta, source, params )
+                self:endGameCheck(self.engine)
+            end,
+        },
         
     },
 }
@@ -236,7 +307,7 @@ end
 
 
 for i, id, carddef in sorted_pairs( CARDS ) do
-    carddef.series = "SAL"
+    carddef.series = CARD_SERIES.GENERAL
 
     Content.AddNegotiationCard( id, carddef )
 end
