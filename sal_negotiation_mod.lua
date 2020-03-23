@@ -2,6 +2,39 @@ local negotiation_defs = require "negotiation/negotiation_defs"
 local CARD_FLAGS = negotiation_defs.CARD_FLAGS
 local EVENT = negotiation_defs.EVENT
 
+local QUIPS =
+{
+    ["back_down_quips"] = {
+        {
+            tags = "target_self",
+            [[
+                !placate
+                $neutralTakenAback
+                Fine, fine. You win this one.
+            ]],
+            [[
+                !placate
+                $neutralTakenAback
+                Okay, you got me.
+            ]],
+        },
+        {
+            tags = "target_other",
+            [[
+                !angry
+                !point
+                You step down!
+            ]],
+        },
+        {
+            tags = "target_both",
+            [[
+                I'll step down if you step down.
+            ]],
+        }
+    },
+}
+
 local CARDS =
 {
     back_down = 
@@ -10,10 +43,12 @@ local CARDS =
         desc = "Remove one of your arguments or bounties. Its controller gain resolve equal to the argument's resolve.",
         flavour = "'Alright, alright, you're right about this. And only this.'",
         icon = "negotiation/stammer.tex",
+        quips = QUIPS["back_down_quips"],
 
         flags = CARD_FLAGS.DIPLOMACY,
         rarity = CARD_RARITY.UNCOMMON,
 
+        max_xp = 5,
         cost = 1,
         healModifier = 1,
 
@@ -31,6 +66,28 @@ local CARDS =
                 
             end
         end,
+        OnPreResolve = function( self, minigame, targets )
+            local selfTarget = 0
+            local otherTarget = 0
+            for i, target in ipairs( targets ) do
+                if target.negotiator == self.negotiator then
+                    selfTarget = selfTarget + 1
+                else
+                    otherTarget = otherTarget + 1
+                end
+            end
+            ---[[
+            if selfTarget == 0 then
+                self.quip = "target_other"
+            else
+                if otherTarget == 0 then
+                    self.quip = "target_self"
+                else
+                    self.quip = "target_both"
+                end
+            end
+            --]]
+        end,
 
         OnPostResolve = function( self, minigame, targets )
             self:Reconsider(minigame, targets)
@@ -41,6 +98,7 @@ local CARDS =
         name = "Sticky Back Down",
         flavour = "'Alright, alright, I'll back down. Eventually.'",
         flags = CARD_FLAGS.DIPLOMACY | CARD_FLAGS.STICKY,
+        --quips = QUIPS["back_down_quips"],
     },
     back_down_plus2 =
     {
@@ -49,6 +107,7 @@ local CARDS =
         flavour = "'I'm done backing down. Why don't <i>you</> back down instead?'",
         target_enemy = TARGET_FLAG.ARGUMENT | TARGET_FLAG.BOUNTY,
         flags = CARD_FLAGS.HOSTILE,
+        --quips = QUIPS["back_down_quips"],
     },
     preach =
     {
@@ -64,7 +123,7 @@ local CARDS =
         rarity = CARD_RARITY.UNCOMMON,
         
         cost = 1,
-        num_indoctrination = 3,
+        num_indoctrination = 4,
 
         OnPostResolve = function( self, minigame )
             minigame:GetOpponentNegotiator():AddModifier( "INDOCTRINATION", self.num_indoctrination )
@@ -82,7 +141,7 @@ local CARDS =
     preach_plus2 = 
     {
         name = "Enhanced Preach",
-        num_indoctrination = 5,
+        num_indoctrination = 6,
     },
     blackmail = 
     {
@@ -263,6 +322,7 @@ local MODIFIERS =
     {
         name = "Gain Shills At The End",
         desc = "Gain {1#money} at the end of this negotiation for each stacks on this bounty if this bounty still exists, regardless whether you win or lose.",
+        feature_desc = "Gain {1} {GAIN_SHILLS_AT_END}.",
         desc_fn = function( self, fmt_str )
             return loc.format( fmt_str, 5 )
         end,

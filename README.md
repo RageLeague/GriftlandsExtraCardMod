@@ -8,7 +8,8 @@ It will be constantly updated.
 
 1. Find "Griftlands" folder on your computer, where you installed it.
 2. Open data.zip with WinRAR. Go to "data.zip\scripts\content\negotiation". Drag sal_negotiation_mod.lua into this folder.
-3. Volia! It probably works. Then you can run "Griftlands" and see the changes. If everything works, you can go to the compedium section and see the new cards.
+3. Similarly, drag sal_battle_mod.lua into "data.zip\scripts\content\battle" and drag unlocks_def_mod.lua into "data.zip\scripts\content\autoload".
+4. Volia! It probably works. Then you can run "Griftlands" and see the changes. If everything works, you can go to the compedium section and see the new cards.
 
 ## What changes are added to the game?
 
@@ -19,3 +20,7 @@ It will be constantly updated.
 ## Supported versions
 
 This mod works for Griftlands Alpha(Update 10) and Griftlands Experimental, probably. I won't guarentee it works for future versions of the game.
+
+## Disclaimer
+
+In case it isn't obvious, I don't own Griftlands and all the assets used for the custom cards. They belong to Klei.
