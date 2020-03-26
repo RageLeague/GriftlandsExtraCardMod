@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.4
+## 0.0.4 (Mar 25, 2020)
 
 * Streamlined mod installation process a bit.
 * Added an erratum for **Stagger** so it's a debuff.
