@@ -413,9 +413,9 @@ local CARDS =
         desc = "Gain: Choose {HEADS} or {SNAILS} at the end of each turn. Whenever you get the chosen side, apply <#UPGRADE>{1}</> {COMPOSURE} to a random argument.",
         composure_stacks = 3,
     },
-    suprise_information =
+    surprise_information =
     {
-        name = "Suprise Information",
+        name = "Surprise Information",
         desc = "Remove {1} {IMPATIENCE} from the opponent.",
         cost = 1,
         desc_fn = function( self, fmt_str )
@@ -442,15 +442,15 @@ local CARDS =
             end
         end,
     },
-    suprise_information_plus =
+    surprise_information_plus =
     {
-        name = "Boosted Suprise Information",
+        name = "Boosted Surprise Information",
         min_persuasion = 4,
         max_persuasion = 7,
     },
-    suprise_information_plus2 =
+    surprise_information_plus2 =
     {
-        name = "Enhanced Suprise Information",
+        name = "Enhanced Surprise Information",
         desc = "Remove <#UPGRADE>{1}</> {IMPATIENCE} from the opponent.",
         impatience_remove = 2,
     },

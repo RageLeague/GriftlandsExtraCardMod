@@ -3,8 +3,12 @@
 ## 0.0.4
 
 * Streamlined mod installation process a bit.
-* Added an erratum for "Stagger" so it's a debuff.
+* Added an erratum for **Stagger** so it's a debuff.
+* Errata'd **Vendetta** so that it doesn't crash when refered to in a card during battle.
 * Buffed **Bloodletting**: Deal additional 3~5 damage and change **Wide Bloodletting** to **Crippling Bloodletting**.
+* Added 2 new battle cards: **Bullseye** and **Provoking Kick**.
+* Added 2 new negotiation cards: **Clairvoyance** and **Surprise information**.
+* Changed the series for **Bloodletting** because Rook can't really use it.
 
 ## 0.0.3 (Mar 23, 2020)
 
