@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.4
+
+* Streamlined mod installation process a bit.
+* Added an erratum for "Stagger" so it's a debuff.
+* Buffed **Bloodletting**: Deal additional 3~5 damage and change **Wide Bloodletting** to **Crippling Bloodletting**.
+
 ## 0.0.3 (Mar 23, 2020)
 
 * Added 3 new battle cards: **Bloodletting**, **Bodyguard**, and **Critical Strike**.

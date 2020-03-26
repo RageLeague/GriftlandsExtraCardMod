@@ -17,6 +17,11 @@ local attacks =
         cost = 1,
         target_type = TARGET_TYPE.ENEMY,
 
+        series = "SAL",
+
+        min_damage = 3,
+        max_damage = 5,
+
         maintainRatio = 0,
 
         OnPostResolve = function( self, battle, attack)
@@ -31,10 +36,14 @@ local attacks =
                         if bleedStack <= hit.target:GetConditionStacks("BLEED") then
                             bleed:SetStacks(bleedStack - 1)
                         end
+                        if self.additionalDebuff then
+                            hit.target:AddCondition(self.additionalDebuff, 1, self)
+                        end
                     end
                     hit.target:AddCondition("BLEED", math.floor(initBleedCount * self.maintainRatio), self)
                 end
             end
+            self.hit_count = 1
         end,
     },
     bloodletting_plus =
@@ -45,9 +54,10 @@ local attacks =
     },
     bloodletting_plus2 =
     {
-        name = "Wide Bloodletting",
-        desc = "<#UPGRADE>Each</> enemy fighter triggers {BLEED} damage until the fighter dies or {BLEED} goes away.",
-        target_mod = TARGET_MOD.TEAM,
+        name = "Crippling Bloodletting",
+        desc = "Target enemy fighter triggers {BLEED} damage until the fighter dies or {BLEED} goes away.\n<#UPGRADE>Apply 1 {CRIPPLE} each time it is triggered.</>",
+        --target_mod = TARGET_MOD.TEAM,
+        additionalDebuff = "CRIPPLE",
     },
     bodyguard =
     {
@@ -140,10 +150,180 @@ local attacks =
         stagger_delta = 1,
         stagger_delta_threshold = 2,
     },
+    bullseye =
+    {
+        name = "Bullseye",
+        desc = "Gain: Ranged cards have an additional {1} percent change of dealing {CRITICAL_DAMAGE}.",
+        desc_fn = function( self, fmt_str )
+            return loc.format( fmt_str, self.bullseye_amt )
+        end,
+        icon = "battle/target_practice.tex",
+
+        target_type = TARGET_TYPE.SELF,
+        cost = 1,
+        rarity = CARD_RARITY.UNCOMMON,
+        flags = CARD_FLAGS.SKILL | CARD_FLAGS.EXPEND,
+        bullseye_amt = 10,
+        OnPostResolve = function( self, battle, attack)
+            self.owner:AddCondition("bullseye", self.bullseye_amt, self)
+        end,
+
+        condition = 
+        {
+            desc = "Ranged cards have a {1} percent chance of dealing {CRITICAL_DAMAGE}.",
+            desc_fn = function(self, fmt_str)
+                return loc.format(fmt_str, self.stacks)
+            end,
+            icon = "battle/conditions/combo.tex",
+            max_stacks = 100,
+            priority = 1,
+            --[[OnPostDamage = function( self, damage, attacker, battle, source )
+                local card
+                if is_instance( source, Battle.Card ) then
+                    card = source
+                elseif is_instance( source, Battle.Attack ) then
+                    card = source.card
+                end
+                if card.temp_piercing then
+                    card.temp_piercing = false
+                    card.flags = card.flags & (~CARD_FLAGS.PIERCING)
+                end
+            end,--]]
+            event_handlers =
+            {
+                [ BATTLE_EVENT.PRE_RESOLVE ] = function( self, battle, attack )
+                    if (attack and attack.attacker == self.owner) then
+                        if attack.card and attack.card:IsFlagged(CARD_FLAGS.RANGED) then
+                            if math.random() * 100 < self.stacks then
+
+                                if (not attack.card:IsFlagged(CARD_FLAGS.PIERCING)) then
+                                    attack.card.temp_piercing = true
+                                    attack.card:SetFlags(CARD_FLAGS.PIERCING)
+                                end
+                                for i, hit in attack:Hits() do
+                                    hit.target:AddCondition("CRITICAL_DAMAGE",1,self)
+                                end
+                            end
+                        end
+                    end
+                end,
+                [ BATTLE_EVENT.POST_RESOLVE ] = function( self, battle, attack )
+                    if (attack and attack.attacker == self.owner) then
+                        if attack.card and attack.card:IsFlagged(CARD_FLAGS.RANGED) then
+                            if attack.card.temp_piercing then
+                                attack.card.temp_piercing = false
+                                attack.card:ClearFlags(CARD_FLAGS.PIERCING)
+                            end
+                            for i, hit in attack:Hits() do
+                                hit.target:RemoveCondition("CRITICAL_DAMAGE")
+                            end
+                        end
+                    end
+                end,
+            }
+        },
+    },
+    bullseye_plus =
+    {
+        name = "Boosted Bullseye",
+        desc = "Gain: Ranged cards have an additional <#UPGRADE>{1}</> percent change of dealing {CRITICAL_DAMAGE}.",
+        bullseye_amt = 15,
+
+    },
+    bullseye_plus2 =
+    {
+        name = "Initial Bullseye",
+        desc = "Gain: Ranged cards have an additional {1} percent change of dealing {CRITICAL_DAMAGE}.",
+        flags = CARD_FLAGS.SKILL | CARD_FLAGS.EXPEND | CARD_FLAGS.AMBUSH,
+    },
+    provoking_kick =
+    {
+        name = "Provoking Kick",
+        desc = "If the target is a sentient humanoid, apply {STUN} and {VENDETTA}.",
+        anim = "kick",
+        target_type = TARGET_TYPE.ENEMY,
+
+        min_damage = 8,
+        max_damage = 8,
+
+        rarity = CARD_RARITY.UNCOMMON,
+        cost = 2,
+        max_xp = 4,
+        flags = CARD_FLAGS.MELEE | CARD_FLAGS.EXPEND,
+
+        must_be_humanoid = true,
+
+        OnPostResolve = function( self, battle, attack)
+            for i, hit in attack:Hits() do
+                local hitTarget = hit.target
+                if (not must_be_humanoid) or hitTarget.agent:IsSentient() then
+                    hitTarget:AddCondition("STUN",1,self)
+                    if hitTarget:GetConditionStacks("VENDETTA") == 0 then
+                        hitTarget:AddCondition("VENDETTA",1,self)
+                    end
+                end
+            end
+        end,
+    },
+    provoking_kick_plus =
+    {
+        name = "Boosted Provoking Kick",
+        min_damage = 12,
+        max_damage = 12,
+    },
+    provoking_kick_plus2 =
+    {
+        name = "Enhanced Provoking Kick",
+        desc = "<#UPGRADE>Apply {STUN} and {VENDETTA}.</>",
+        must_be_humanoid = false,
+    },
 }
 
 for i, id, data in sorted_pairs(attacks) do
-    data.series = CARD_SERIES.GENERAL
-    
+    if not data.series then
+        data.series = CARD_SERIES.GENERAL
+    end
     Content.AddBattleCard( id, data )
 end
+
+local CONDITIONS = 
+{
+    CRITICAL_DAMAGE =
+    {
+        name = "Critical Damage",
+        desc = "A card that does critical damage does double the usual damage, and has {PIERCING}.",
+        hidden = true,
+        priority = 1,
+        OnPreDamage = function( self, damage, attacker, battle, source, piercing )
+            if source == nil then
+                return damage
+            end
+            local card
+            if is_instance( source, Battle.Card ) then
+                card = source
+            elseif is_instance( source, Battle.Attack ) then
+                card = source.card
+            end
+            if (card) then
+                return damage * 2
+            end
+        
+            return damage
+        end,
+    },
+}
+
+for id, def in pairs( CONDITIONS ) do
+    Content.AddBattleCondition( id, def )
+end
+--[[
+local FEATURES =
+{
+    
+}
+
+for id, data in pairs( FEATURES ) do
+    local def = BattleFeatureDef(id, data)
+    Content.AddBattleCardFeature(id, def)
+end
+--]]
