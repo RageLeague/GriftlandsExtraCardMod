@@ -6,9 +6,11 @@ It will be constantly updated.
 
 ## Install
 
+If you installed the mod before 0.0.4 for some reason, you need to undo all the previous changes.
+
 1. Find "Griftlands" folder on your computer, where you installed it.
-2. Open data.zip with WinRAR. Go to "data.zip\scripts\content\negotiation". Drag sal_negotiation_mod.lua into this folder.
-3. Similarly, drag sal_battle_mod.lua into "data.zip\scripts\content\battle" and drag unlocks_def_mod.lua into "data.zip\scripts\content\autoload".
+2. Open data.zip with WinRAR. Go to "data.zip\scripts\content\autoload". Drag zzz_utility_mod_load.lua into this folder.
+3. Create a new folder "mods" under "data.zip\scripts\content\" if you haven't already. Drag the folder rageleague_extra_cards_mod into the "mods" folder.
 4. Volia! It probably works. Then you can run "Griftlands" and see the changes. If everything works, you can go to the compedium section and see the new cards.
 
 ## What changes are added to the game?

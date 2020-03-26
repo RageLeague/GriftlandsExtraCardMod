@@ -25,13 +25,17 @@ local function AddUnlockTrack( id, track )
 
             if item.battle_card then
                 assert( Content.GetBattleCard( item.battle_card ), item.battle_card )
-                item.unlock_id = Content.AddUnlock(item.battle_card)
+                if item.battle_card.series == id or item.battle_card.series == CARD_SERIES.GENERAL then
+                    item.unlock_id = Content.AddUnlock(item.battle_card)
+                end
             elseif item.deck_id then
                  assert( Content.GetDeck( item.deck_id ), item.deck_id )
                  item.unlock_id = Content.AddUnlock(item.deck_id)
             elseif item.negotiation_card then
                 assert( Content.GetNegotiationCard( item.negotiation_card ), item.negotiation_card )
-                item.unlock_id = Content.AddUnlock(item.negotiation_card)
+                if item.negotiation_card.series == id or item.negotiation_card.series == CARD_SERIES.GENERAL then
+                    item.unlock_id = Content.AddUnlock(item.negotiation_card)
+                end
             elseif item.graft_id then
                 assert( Content.GetGraft( item.graft_id ), item.graft_id )
                 item.unlock_id = Content.AddUnlock(item.graft_id)
@@ -77,6 +81,9 @@ local ADDITIONAL_UNLOCKS = {
             { battle_card = "bloodletting"},
             { battle_card = "bodyguard"},
             { battle_card = "critical_strike"},
+            { battle_card = "bullseye"},
+            { battle_card = "provoking_kick"},
+            
         }
     },
 }

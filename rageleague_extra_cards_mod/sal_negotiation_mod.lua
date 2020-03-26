@@ -1,6 +1,10 @@
 local negotiation_defs = require "negotiation/negotiation_defs"
 local CARD_FLAGS = negotiation_defs.CARD_FLAGS
-local EVENT = negotiation_defs.EVENT
+local EVENT = ExtendEnum( negotiation_defs.EVENT,
+{
+    "PRE_GAMBLE",
+    "GAMBLE",
+})
 
 local QUIPS =
 {
@@ -175,7 +179,7 @@ local CARDS =
     blackmail_plus = 
     {
         name = "Tall Blackmail",
-        min_persuasion = 0,
+        --min_persuasion = 0,
         max_persuasion = 5,
     },
     blackmail_plus2 =
@@ -184,7 +188,7 @@ local CARDS =
         desc = "Deal +{1} damage for every <#UPGRADE>{DOMINANCE}</> you have.",
         flags = CARD_FLAGS.DIPLOMACY,
         additionStack = "DOMINANCE",
-        min_persuasion = 0,
+        --min_persuasion = 0,
         max_persuasion = 5,
     },
     darvo = 
@@ -314,6 +318,142 @@ local CARDS =
         max_persuasion = 10,
         money_cost = 20,
     },
+    clairvoyance = 
+    {
+        name = "Clairvoyance",
+        desc = "Gain: Choose {HEADS} or {SNAILS} at the end of each turn. Whenever you get the chosen side, apply {1} {COMPOSURE} to a random argument.",
+        icon = "negotiation/hyperactive.tex",
+        cost = 2,
+        desc_fn = function( self, fmt_str )
+            return loc.format( fmt_str, self.composure_stacks )
+        end,
+        flags = CARD_FLAGS.MANIPULATE | CARD_FLAGS.EXPEND,
+        rarity = CARD_RARITY.UNCOMMON,
+        series = "ROOK",
+        max_xp = 4, 
+
+        composure_stacks = 2,
+
+        OnPostResolve = function( self, minigame, targets )
+            self.negotiator:CreateModifier("clairvoyance", self.composure_stacks, self)
+        end,
+        modifier = 
+        {
+            name = "Clairvoyance",
+            desc = "Choose {HEADS} or {SNAILS} at the end of each turn. Whenever you get the chosen side, apply {1} {COMPOSURE} to a random argument.",
+            chosen_side_str = "You have chosen: {{2}}",
+            desc_fn = function( self, fmt_str )
+                if self.chosen_side then
+                    return loc.format( fmt_str .. "\n" ..self.chosen_side_str, self.stacks, self.chosen_side )
+                else
+                    return loc.format( fmt_str, self.stacks )
+                end
+            end,
+            
+            max_resolve = 5,
+            OnInit = function(self)
+                self:UpdateIcon()
+            end,
+
+            UpdateIcon = function(self)
+                if (self.chosen_side) then
+                    if self.chosen_side == "HEADS" then
+                        self.icon = engine.asset.Texture("negotiation/modifiers/rig_heads.tex")
+                    elseif self.chosen_side == "SNAILS" then
+                        self.icon = engine.asset.Texture("negotiation/modifiers/rig_snails.tex")
+                    else
+                        self.icon = engine.asset.Texture("negotiation/modifiers/lucky_coin.tex")
+                    end
+                else
+                    self.icon = engine.asset.Texture("negotiation/modifiers/lucky_coin.tex")
+                end
+                self.engine:BroadcastEvent( negotiation_defs.EVENT.UPDATE_MODIFIER_ICON, self)
+            end,
+
+            event_handlers = 
+            {
+                [ EVENT.END_PLAYER_TURN ] = function( self, minigame )
+                    local cards = {
+                        Negotiation.Card( "coin_snails", self.owner ),
+                        Negotiation.Card( "coin_heads", self.owner ),
+                    }
+                    local pick = self.engine:ImproviseCards( cards, 1 )[1]
+                    local side = pick and pick.side or "HEADS"
+                    if pick then self.engine:ExpendCard(pick) end
+                    if side == "HEADS" then
+                        --self.negotiator:AddModifier("RIG_HEADS", 2)
+                        self.chosen_side = "HEADS"
+                    else
+                        --self.negotiator:AddModifier("RIG_SNAILS", 2)
+                        self.chosen_side = "SNAILS"
+                    end
+                    self:UpdateIcon()
+                    self:NotifyChanged()
+                end,
+                [ EVENT.GAMBLE ] = function( self, result, source, ignore_bonuses )
+                    if not ignore_bonuses and result == self.chosen_side then
+                        local targets = self.engine:CollectAlliedTargets(self.negotiator)
+                        if #targets > 0 then
+                            local target = targets[math.random(#targets)]
+                            target:DeltaComposure(self.stacks, self)
+                        end
+                    end
+                end,
+            },
+        },
+    },
+    clairvoyance_plus = 
+    {
+        name = "Pale Clairvoyance",
+        cost = 1,
+    },
+    clairvoyance_plus2 =
+    {
+        name = "Boosted Clairvoyance",
+        desc = "Gain: Choose {HEADS} or {SNAILS} at the end of each turn. Whenever you get the chosen side, apply <#UPGRADE>{1}</> {COMPOSURE} to a random argument.",
+        composure_stacks = 3,
+    },
+    surprise_information =
+    {
+        name = "Surprise Information",
+        desc = "Remove {1} {IMPATIENCE} from the opponent.",
+        cost = 1,
+        desc_fn = function( self, fmt_str )
+            return loc.format( fmt_str, self.impatience_remove )
+        end,
+        icon = "negotiation/sealed_admiralty_envelope.tex",
+        flags = CARD_FLAGS.DIPLOMACY | CARD_FLAGS.EXPEND,
+        rarity = CARD_RARITY.UNCOMMON,
+
+        min_persuasion = 2,
+        max_persuasion = 5,
+
+        impatience_remove = 1,
+
+        RemoveImpatienceFunction = function(self, minigame, target)
+        end,
+        OnPreResolve = function( self, minigame, targets )
+            local target = targets[1]
+            if target.negotiator:HasModifier("IMPATIENCE") then
+                target.negotiator:RemoveModifier("IMPATIENCE", 1, self)
+                if self.RemoveImpatienceFunction then
+                    self:RemoveImpatienceFunction(minigame,target)
+                end
+            end
+        end,
+    },
+    surprise_information_plus =
+    {
+        name = "Boosted Surprise Information",
+        min_persuasion = 4,
+        max_persuasion = 7,
+    },
+    surprise_information_plus2 =
+    {
+        name = "Enhanced Surprise Information",
+        desc = "Remove <#UPGRADE>{1}</> {IMPATIENCE} from the opponent.",
+        impatience_remove = 2,
+    },
 }
 ---[[
 local MODIFIERS =
@@ -367,7 +507,8 @@ end
 
 
 for i, id, carddef in sorted_pairs( CARDS ) do
-    carddef.series = CARD_SERIES.GENERAL
-
+    if not carddef.series then
+        carddef.series = CARD_SERIES.GENERAL
+    end
     Content.AddNegotiationCard( id, carddef )
 end
