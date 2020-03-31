@@ -3,6 +3,7 @@ local LOAD_FILE_ORDER =
 {
     "sal_negotiation_mod",
     "sal_battle_mod",
+    "test_function_override",
     "unlocks_def_mod",
     "game_errata",
 }

@@ -1,6 +1,7 @@
 local battle_defs = require "battle/battle_defs"
 local CARD_FLAGS = battle_defs.CARD_FLAGS
 local BATTLE_EVENT = battle_defs.BATTLE_EVENT
+local CONFIG = require "content/mods/rageleague_extra_cards_mod/config"
 
 local attacks =
 {
@@ -158,6 +159,7 @@ local attacks =
             return loc.format( fmt_str, self.bullseye_amt )
         end,
         icon = "battle/target_practice.tex",
+        flavour = "Think the cards already have a lot of RNG built in it? Well think again.",
 
         target_type = TARGET_TYPE.SELF,
         cost = 1,
@@ -228,7 +230,6 @@ local attacks =
         name = "Boosted Bullseye",
         desc = "Gain: Ranged cards have an additional <#UPGRADE>{1}</> percent change of dealing {CRITICAL_DAMAGE}.",
         bullseye_amt = 15,
-
     },
     bullseye_plus2 =
     {
@@ -241,6 +242,8 @@ local attacks =
         name = "Provoking Kick",
         desc = "If the target is a sentient humanoid, apply {STUN} and {VENDETTA}.",
         anim = "kick",
+        icon = "battle/kick.tex",
+        flavour = "'Now you've gone too far.'",
         target_type = TARGET_TYPE.ENEMY,
 
         min_damage = 8,
@@ -275,7 +278,155 @@ local attacks =
     {
         name = "Enhanced Provoking Kick",
         desc = "<#UPGRADE>Apply {STUN} and {VENDETTA}.</>",
+        flavour = "'How the Hesh are you able to provoke drones and automechs?'",
+
         must_be_humanoid = false,
+    },
+    ailment_storm =
+    {
+        name = "Ailment Storm",
+        desc = "{MULTILEVEL}(Level {2})\nEvery time this card levels up, choose from {1} debuffs and add that effect to this card.",
+        desc_fn = function( self, fmt_str )
+            if self.userdata.applied_features and #self.userdata.applied_features then
+                local applyString = "{1} {{2}}"
+                local totalApplyString = {}
+                for debuff_id, debuff_amt in pairs(self.userdata.applied_features) do
+                    table.insert(totalApplyString, loc.format((#totalApplyString > 0 and ", " or "Apply ").. applyString, debuff_amt, debuff_id))
+                end
+                return loc.format( fmt_str .. "\n{3}.", self.debuff_choices, self.userdata.upgraded_times or 0, table.concat(totalApplyString))
+            else
+                return loc.format( fmt_str, self.debuff_choices, self.userdata.upgraded_times or 0 )
+            end
+        end,
+        anim = "whip",
+        icon = "battle/cataclysm.tex",
+        flavour = "'Ok, you hit me. What does that even do?'\n" ..
+            "'It barely tickles me.'\n" ..
+            "'Ok it's starting to get a bit annoying.'\n" ..
+            "'Ow now it's starting to hurt.'\n" ..
+            "'Ow stop it!'\n" ..
+            "'PLEASE STOP! YOU ARE KILLING ME!'\n" ..
+            "'AAAAAAAHHHHHHHHHH'",
+        target_type = TARGET_TYPE.ENEMY,
+        manual_desc = true,
+
+        min_damage = 3,
+        max_damage = 3,
+
+        rarity = CARD_RARITY.RARE,
+        cost = 1,
+        max_xp = 6,
+        flags = CARD_FLAGS.MELEE | CARD_FLAGS.HATCH,
+
+        additional_features =
+        {
+            ["WOUND"] = 2,
+            ["CRIPPLE"] = 2,
+            ["STAGGER"] = 3,
+            -- For some reason weakpoint is always reduced by 1 when using this attack, and it doesn't double the damage.
+            ["WEAK_POINT"] = 2,
+            ["EXPOSED"] = 2,
+            ["MARK"] = 3,
+            ["BLEED"] = 4,
+            ["BURN"] = 4,
+            ["SCORCHED"] = 2,
+            ["RICOCHET"] = 3,
+            ["SCANNED"] = 1,
+            ["dread"] = 2,
+        },
+        debuff_choices = 3,
+        hatch = true,
+        hatch_fn = function( self, battle )
+            self.userdata.xp = 0
+            self.userdata.upgraded_times = (self.userdata.upgraded_times or 0) + 1
+            if not self.userdata.applied_features then
+                self.userdata.applied_features = {}
+            end
+            -- This is to make sure that no duplicates until it is too late.
+            local available_upgrades = {}
+            for debuff_id, debuff_amt in pairs(self.additional_features) do
+                if not self.userdata.applied_features[debuff_id] then
+                    available_upgrades[debuff_id] = debuff_amt
+                end
+            end
+            ---[[
+            -- Add options if everything has chosen at least once
+            local EntryNumbers = function(table_entry)
+                local count = 0
+                for i, j in pairs(table_entry) do
+                    count = count + 1
+
+                end
+                return count
+            end
+            while EntryNumbers(available_upgrades) < self.debuff_choices do
+                local random_debuff = {}
+                for debuff_id, debuff_amt in pairs(self.additional_features) do
+                    if not available_upgrades[debuff_id] then
+                        table.insert(random_debuff, debuff_id)
+                    end
+                end
+                if #random_debuff > 0 then
+                    local choice = random_debuff[math.random(#random_debuff)]
+                    available_upgrades[choice] = math.ceil(self.additional_features[choice] * 0.5)
+                end
+            end
+            --]]
+            -- At this point there should be at least 3 choices.
+            local cards = {}
+            for debuff_id, debuff_amt in pairs(available_upgrades) do
+                local choice_card = Battle.Card("ailment_storm_supplemental",self.owner)
+                choice_card.debuff_name = debuff_id
+                choice_card.add_stacks = debuff_amt
+                choice_card.name = debuff_id
+                table.insert(cards, choice_card)
+            end
+            -- Finally, present cards as improvised choice
+            cards = table.multipick( cards, self.debuff_choices )
+            battle:ImproviseCards( cards, 1 )
+            
+        end,
+        OnPostResolve = function( self, battle, attack)
+            if not self.userdata.applied_features then
+                self.userdata.applied_features = {}
+            end
+            for i, hit in attack:Hits() do
+                for debuff_id, debuff_amt in pairs(self.userdata.applied_features) do
+                    hit.target:AddCondition(debuff_id,debuff_amt,self)
+                end
+            end
+        end,
+        event_handlers =
+        {
+            [BATTLE_EVENT.CARD_IMPROVISED] = function(self, card, battle)
+                if not self.userdata.applied_features then
+                    self.userdata.applied_features = {}
+                end
+                if card and card.debuff_name then
+                    local picked_debuff = card.debuff_name
+                    local picked_stacks = card.add_stacks
+                    battle:ExpendCard(card)
+                    self.userdata.applied_features[picked_debuff] = (self.userdata.applied_features[picked_debuff] or 0) + picked_stacks
+                end
+            end,
+        }
+    },
+    ailment_storm_supplemental =
+    {
+        name = "Ailment Storm: Upgrade",
+        desc = "Add \"Apply {1} {{2}}\" to this card as an upgrade.",
+        desc_fn = function( self, fmt_str )
+            return loc.format( fmt_str, self.add_stacks, self.debuff_name)
+        end,
+        icon = "battle/cataclysm.tex",
+        debuff_name = "DEBUFF",
+        add_stacks = 1,
+        manual_desc = true,
+        cost = 0,
+
+        flags = CARD_FLAGS.UNPLAYABLE | CARD_FLAGS.MELEE,
+        rarity = CARD_RARITY.UNIQUE,
+        hide_in_cardex = true,
     },
 }
 
@@ -283,7 +434,10 @@ for i, id, data in sorted_pairs(attacks) do
     if not data.series then
         data.series = CARD_SERIES.GENERAL
     end
-    Content.AddBattleCard( id, data )
+    local basic_id = data.base_id or id:match( "(.*)_plus.*$" ) or id:match( "(.*)_upgraded[%w]*$") or id:match( "(.*)_supplemental.*$" )
+    if CONFIG.enabled_cards[id] or CONFIG.enabled_cards[basic_id] then
+        Content.AddBattleCard( id, data )
+    end
 end
 
 local CONDITIONS = 
@@ -314,12 +468,17 @@ local CONDITIONS =
 }
 
 for id, def in pairs( CONDITIONS ) do
+    
     Content.AddBattleCondition( id, def )
 end
---[[
+---[[
 local FEATURES =
 {
-    
+    MULTILEVEL =
+    {
+        name = "Multi-level",
+        desc = "This card can level up multiple times.",
+    }
 }
 
 for id, data in pairs( FEATURES ) do

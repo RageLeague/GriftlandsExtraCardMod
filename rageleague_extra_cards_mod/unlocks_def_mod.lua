@@ -3,7 +3,7 @@ local CONTENT = Content.internal
 local function deepcopy(orig)
     local orig_type = type(orig)
     local copy
-    if orig_type == 'table' then
+    if orig_type == "table" then
         copy = {}
         for orig_key, orig_value in next, orig, nil do
             copy[deepcopy(orig_key)] = deepcopy(orig_value)
@@ -64,30 +64,79 @@ local UNLOCK_SERIES = {
 local ADDITIONAL_UNLOCKS = {
     { 
         --Additional stuff
-        id = "rageleague_griftland_mod",
-        name = "Griftlands Mod Content",
-        negotiation_name = "Modded Negotiation",
-        battle_name = "Modded Battle",
+        id = "rageleague_griftland_mod_1",
+        name = "Mod: Politics and Payoffs",
+        negotiation_name = "Politics",
+        battle_name = "Payoffs",
         icon = "battle/decks/card_unlock_sal.tex",
         icon_locked = "battle/decks/card_unlock_sal_locked.tex",
-        pts = 6000,
+        pts = 4000,
         items = 
         {
             { negotiation_card = "back_down"},
             { negotiation_card = "preach"},
-            { negotiation_card = "blackmail"},
             { negotiation_card = "darvo"},
-            { negotiation_card = "fake_promise"},
+
             { battle_card = "bloodletting"},
             { battle_card = "bodyguard"},
-            { battle_card = "critical_strike"},
             { battle_card = "bullseye"},
-            { battle_card = "provoking_kick"},
+        }
+    },
+    { 
+        --Additional stuff
+        id = "rageleague_griftland_mod_2",
+        name = "Mod: Deception and Ailments",
+        negotiation_name = "Deception",
+        battle_name = "Ailments",
+        icon = "battle/decks/card_unlock_sal.tex",
+        icon_locked = "battle/decks/card_unlock_sal_locked.tex",
+        pts = 4000,
+        items = 
+        {
+            { negotiation_card = "blackmail"},
+            { negotiation_card = "fake_promise"},
+            { negotiation_card = "clairvoyance"},
+            { negotiation_card = "surprise_information"},
             
+            { battle_card = "critical_strike"},
+            { battle_card = "provoking_kick"},
+            { battle_card = "ailment_storm"},
         }
     },
 }
-
+local function FilterInvalidCards( tracks, condition, set_id )
+    for k,track_item in ipairs(tracks) do
+        track_item.id = track_item.id .. set_id
+        local i = 1
+        while i <= #track_item.items do
+            if condition(track_item.items[i], set_id) then
+                table.remove(track_item.items, i)
+            else
+                i = i + 1
+            end
+        end
+    end
+    return tracks
+end
+local function CardFilter(item, set_id)
+    if item.battle_card then
+        local battle_card = Content.GetBattleCard( item.battle_card )
+        if battle_card and (battle_card.series == set_id or battle_card.series == CARD_SERIES.GENERAL) then
+            --item.unlock_id = Content.AddUnlock(item.battle_card)
+            return false
+        else
+            return true
+        end
+    elseif item.negotiation_card then
+        local negotiation_card = Content.GetNegotiationCard( item.negotiation_card )
+        if negotiation_card and (negotiation_card.series == set_id or negotiation_card.series == CARD_SERIES.GENERAL) then
+            return false
+        else
+            return true
+        end
+    end
+    return false
+end
 
 for i,series_name in ipairs(UNLOCK_SERIES) do
     local get_track = Content.GetUnlockTrack(series_name)
@@ -97,6 +146,6 @@ for i,series_name in ipairs(UNLOCK_SERIES) do
         start_pts = start_pts + unlock_item.pts
         unlock_item.total_pts = start_pts
     end
-    AddUnlockTrack(series_name, deepcopy(ADDITIONAL_UNLOCKS))
+    AddUnlockTrack(series_name, FilterInvalidCards(deepcopy(ADDITIONAL_UNLOCKS), CardFilter, series_name))
 end
 
