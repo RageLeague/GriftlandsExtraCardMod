@@ -5,6 +5,7 @@ local EVENT = ExtendEnum( negotiation_defs.EVENT,
     "PRE_GAMBLE",
     "GAMBLE",
 })
+local CONFIG = require "RageLeagueExtraCardsMod:config"
 
 local QUIPS =
 {
@@ -293,6 +294,7 @@ local CARDS =
         name = "Fake Promise",
         desc = "Create a {GAIN_SHILLS_AT_END} argument with <#UPGRADE>{1}</> stacks.",
         icon = "negotiation/prominence.tex",
+        flavour = "'Yes, yes. I promise I will pay you for your cooperation.'\n'Since when did I promise that? Do you have any proof?'",
         cost = 1,
         desc_fn = function( self, fmt_str )
             return loc.format( fmt_str, math.floor(self.money_cost / 5) )
@@ -323,6 +325,8 @@ local CARDS =
         name = "Clairvoyance",
         desc = "Gain: Choose {HEADS} or {SNAILS} at the end of each turn. Whenever you get the chosen side, apply {1} {COMPOSURE} to a random argument.",
         icon = "negotiation/hyperactive.tex",
+        flavour = "'I'm a psychic. I can predict which side this coin will land on. Watch this - wait, hold on, let's try this again...'",
+
         cost = 2,
         desc_fn = function( self, fmt_str )
             return loc.format( fmt_str, self.composure_stacks )
@@ -417,6 +421,11 @@ local CARDS =
     {
         name = "Surprise Information",
         desc = "Remove {1} {IMPATIENCE} from the opponent.",
+        flavour =
+[[You'll never see it coming
+You'll see that my mind is too fast for eyes
+You're done in
+By the time it's hit you, your last surprise]],
         cost = 1,
         desc_fn = function( self, fmt_str )
             return loc.format( fmt_str, self.impatience_remove )
@@ -510,5 +519,8 @@ for i, id, carddef in sorted_pairs( CARDS ) do
     if not carddef.series then
         carddef.series = CARD_SERIES.GENERAL
     end
-    Content.AddNegotiationCard( id, carddef )
+    local basic_id = carddef.base_id or id:match( "(.*)_plus.*$" ) or id:match( "(.*)_upgraded[%w]*$") or id:match( "(.*)_supplemental.*$" )
+    if CONFIG.enabled_cards[id] or CONFIG.enabled_cards[basic_id] then
+        Content.AddNegotiationCard( id, carddef )
+    end
 end

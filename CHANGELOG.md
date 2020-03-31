@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0
+
+* Update mod installation process since there's official mod support now.
+* Added a new battle card: **Ailment Storm**.
+* Seperate the unlock packs into two since the screen can't fit them all together.
+* Actually made the unlock packs work for each character. For example, **Bloodletting** won't show up in Rook's pack because Rook can't use it.
+
 ## 0.0.4 (Mar 25, 2020)
 
 * Streamlined mod installation process a bit.
@@ -19,8 +26,8 @@
 ## 0.0.2 (Mar 21, 2020)
 
 * Change the card set to neutral so it works with Rook(Probably).
-* Change "Blackmail" to common from uncommon.
-* Added "Fake Promise", a new card which allows you to negotiate better if you have the shills.
+* Change **Blackmail** to common from uncommon.
+* Added **Fake Promise**, a new card which allows you to negotiate better if you have the shills.
 
 ## 0.0.1 (Mar 21, 2020)
 
