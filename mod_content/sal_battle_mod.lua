@@ -1,7 +1,7 @@
 local battle_defs = require "battle/battle_defs"
 local CARD_FLAGS = battle_defs.CARD_FLAGS
 local BATTLE_EVENT = battle_defs.BATTLE_EVENT
-local CONFIG = require "content/mods/rageleague_extra_cards_mod/config"
+local CONFIG = require "RageLeagueExtraCardsMod:config"
 
 local attacks =
 {

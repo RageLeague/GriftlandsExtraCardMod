@@ -5,7 +5,7 @@ local EVENT = ExtendEnum( negotiation_defs.EVENT,
     "PRE_GAMBLE",
     "GAMBLE",
 })
-local CONFIG = require "content/mods/rageleague_extra_cards_mod/config"
+local CONFIG = require "RageLeagueExtraCardsMod:config"
 
 local QUIPS =
 {

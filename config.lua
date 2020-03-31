@@ -1,3 +1,4 @@
+-- Settings for the mod
 return {
     -- Set the field to "true" if you want to include this card to the game,
     -- and "false" if you don't want to include this card.
