@@ -19,5 +19,7 @@ return {
         ["bullseye"] = true,
         ["provoking_kick"] = true,
         ["ailment_storm"] = true,
+        ["cover_fire"] = true,
+        ["baton_pass"] = true,
     },
 }

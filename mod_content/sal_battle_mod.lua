@@ -1,7 +1,26 @@
 local battle_defs = require "battle/battle_defs"
 local CARD_FLAGS = battle_defs.CARD_FLAGS
-local BATTLE_EVENT = battle_defs.BATTLE_EVENT
+local BATTLE_EVENT = ExtendEnum( battle_defs.EVENT,
+{
+    "PRIMED_GAINED",
+    "PRIMED_LOST",
+    "LUMIN_CHARGED",
+    "LUMIN_SPENT",
+})
 local CONFIG = require "RageLeagueExtraCardsMod:config"
+
+local function ConditionalInclusion(condition)
+    local returnF = function( self, card, source_deck, source_idx, target_deck, target_idx )
+        if card == self and target_deck == self.engine:GetHandDeck() then
+            if not condition(card, self.engine) then
+                self.engine:ExpendCard(card)
+                self.engine:DrawCards(1,false)
+            end
+        end
+    end
+    return returnF
+    
+end
 
 local attacks =
 {
@@ -428,6 +447,106 @@ local attacks =
         rarity = CARD_RARITY.UNIQUE,
         hide_in_cardex = true,
     },
+    cover_fire = 
+    {
+        name = "Cover Fire",
+        desc = "Apply {3} {DEFEND}.\nSpend up to {1} {CHARGE}: Apply {2} additional {DEFEND}.",
+        desc_fn = function( self, fmt_str )
+            return loc.format( fmt_str, self.max_charge_cost, self.additional_defend, self:CalculateDefendText(self.features.DEFEND))
+        end,
+        manual_desc = true,
+        icon = "battle/suppressing_fire.tex",
+        anim = "suppressing",
+
+        rarity = CARD_RARITY.COMMON,
+        cost = 1,
+        max_xp = 6,
+        flags = CARD_FLAGS.SKILL,
+        target_type = TARGET_TYPE.FRIENDLY_OR_SELF,
+        series = "ROOK",
+
+        max_charge_cost = 1,
+        additional_defend = 2,
+
+        features =
+        {
+            DEFEND = 4,
+        },
+
+        OnPostResolve = function( self, battle, attack )
+            local charge_count = 0
+            local tracker = self.owner:GetCondition("lumin_tracker")
+            if tracker then
+                charge_count = tracker:GetCharges()
+            end
+            if charge_count > 0 then
+                tracker:RemoveCharges(math.min(self.max_charge_cost, charge_count), self)
+            end
+        end,
+
+        event_handlers =
+        {
+            [ BATTLE_EVENT.CALC_MODIFY_STACKS ] = function( self, acc, condition_id, fighter, card )
+                if condition_id == "DEFEND" and card == self then
+                    local charge_count = 0
+                    local tracker = self.owner:GetCondition("lumin_tracker")
+                    if tracker then
+                        charge_count = tracker:GetCharges()
+                    end
+                    if charge_count > 0 then
+                        acc:AddValue( math.min(charge_count, self.max_charge_cost) * self.additional_defend )
+                    end
+                end
+            end,
+
+        },
+    },
+    cover_fire_plus =
+    {
+        name = "Boosted Cover Fire",
+        desc = "Apply {3} {DEFEND}.\nSpend up to {1} {CHARGE}: Apply <#UPGRADE>{2}</> additional {DEFEND}.",
+        additional_defend = 5,
+    },
+    cover_fire_plus2 =
+    {
+        name = "Enhanced Cover Fire",
+        desc = "Apply {3} {DEFEND}.\nSpend up to <#UPGRADE>{1}</> {CHARGE}: Apply {2} additional {DEFEND}.",
+        max_charge_cost = 2,
+    },
+    baton_pass =
+    {
+        name = "Baton Pass",
+        desc = "Target ally immediately take their action and prepare a new one.\n{CONDITIONAL_INCLUSION}: There are at least 1 active ally on the team.",
+        anim = "call_in",
+
+        rarity = CARD_RARITY.UNCOMMON,
+        cost = 1,
+        max_xp = 6,
+        flags = CARD_FLAGS.SKILL,
+        target_type = TARGET_TYPE.FRIENDLY,
+        CanPlayCard = function( self, battle, target )
+            return target == nil or target:IsActive(), "MUST BE AN ACTIVE FIGHTER"
+        end,
+        OnPostResolve = function( self, battle, attack )
+            for i, hit in attack:Hits() do
+                if hit.target:GetConditionStacks("STUN") == 0 then
+                    hit.target:PlayBehaviour()
+                    hit.target.last_turn = battle:GetTurns() - 1
+                    hit.target:PrepareTurn()
+                else
+                    hit.target:RemoveCondition("STUN")
+                end
+            end
+        end,
+        event_handlers =
+        {
+            [ BATTLE_EVENT.CARD_MOVED ] = ConditionalInclusion(
+                function(card,battle)
+                    return #(card.owner:GetTeam().fighters) > 1
+                end
+            ),
+        },
+    },
 }
 
 for i, id, data in sorted_pairs(attacks) do
@@ -478,7 +597,12 @@ local FEATURES =
     {
         name = "Multi-level",
         desc = "This card can level up multiple times.",
-    }
+    },
+    CONDITIONAL_INCLUSION =
+    {
+        name = "Conditional Inclusion",
+        desc = "This card is included only after certain conditions are met.\nIf those conditions are not met when this card is drawn, {EXPEND} this card and a replacement card is drawn."
+    },
 }
 
 for id, data in pairs( FEATURES ) do
