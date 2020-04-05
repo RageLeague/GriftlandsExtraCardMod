@@ -278,7 +278,7 @@ local attacks =
         OnPostResolve = function( self, battle, attack)
             for i, hit in attack:Hits() do
                 local hitTarget = hit.target
-                if (not must_be_humanoid) or hitTarget.agent:IsSentient() then
+                if (not self.must_be_humanoid) or hitTarget.agent:IsSentient() then
                     hitTarget:AddCondition("STUN",1,self)
                     if hitTarget:GetConditionStacks("VENDETTA") == 0 then
                         hitTarget:AddCondition("VENDETTA",1,self)
@@ -334,7 +334,7 @@ local attacks =
 
         rarity = CARD_RARITY.RARE,
         cost = 1,
-        max_xp = 6,
+        max_xp = 5,
         flags = CARD_FLAGS.MELEE | CARD_FLAGS.HATCH,
 
         additional_features =
@@ -518,23 +518,29 @@ local attacks =
         name = "Baton Pass",
         desc = "Target ally immediately take their action and prepare a new one.\n{CONDITIONAL_INCLUSION}: There are at least 1 active ally on the team.",
         anim = "call_in",
+        icon = "negotiation/empathy.tex",
 
         rarity = CARD_RARITY.UNCOMMON,
         cost = 1,
         max_xp = 6,
-        flags = CARD_FLAGS.SKILL,
+        flags = CARD_FLAGS.SKILL | CARD_FLAGS.EXPEND,
         target_type = TARGET_TYPE.FRIENDLY,
         CanPlayCard = function( self, battle, target )
             return target == nil or target:IsActive(), "MUST BE AN ACTIVE FIGHTER"
         end,
+
+        playTimes = 1,
+
         OnPostResolve = function( self, battle, attack )
-            for i, hit in attack:Hits() do
-                if hit.target:GetConditionStacks("STUN") == 0 then
-                    hit.target:PlayBehaviour()
-                    hit.target.last_turn = battle:GetTurns() - 1
-                    hit.target:PrepareTurn()
-                else
-                    hit.target:RemoveCondition("STUN")
+            for i = 1,self.playTimes do
+                for i, hit in attack:Hits() do
+                    if hit.target:GetConditionStacks("STUN") == 0 then
+                        hit.target:PlayBehaviour()
+                        hit.target.last_turn = battle:GetTurns() - 1
+                        hit.target:PrepareTurn()
+                    else
+                        hit.target:RemoveCondition("STUN")
+                    end
                 end
             end
         end,
@@ -547,6 +553,18 @@ local attacks =
             ),
         },
     },
+    baton_pass_plus =
+    {
+        name = "Enduring Baton Pass",
+        flags = CARD_FLAGS.SKILL,
+    },
+    baton_pass_plus2 =
+    {
+        name = "Boosted Baton Pass",
+        desc = "Target ally immediately take <#UPGRADE>two of</> their action and prepare a new one.\n{CONDITIONAL_INCLUSION}: There are at least 1 active ally on the team.",
+        playTimes = 2,
+
+    }
 }
 
 for i, id, data in sorted_pairs(attacks) do
