@@ -12,6 +12,7 @@ return {
         ["fake_promise"] = true,
         ["clairvoyance"] = true,
         ["surprise_information"] = true,
+        ["violent_tendencies"] = true,
         -- Battle Cards
         ["bloodletting"] = true,
         ["bodyguard"] = true,

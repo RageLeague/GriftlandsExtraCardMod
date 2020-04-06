@@ -463,6 +463,30 @@ By the time it's hit you, your last surprise]],
         desc = "Remove <#UPGRADE>{1}</> {IMPATIENCE} from the opponent.",
         impatience_remove = 2,
     },
+    violent_tendencies =
+    {
+        name = "Violent Tendencies",
+        desc = "Gain 1 bonus damage for each stacks of {DOMINANCE}.\n{INCEPT} 1 {IMPATIENCE}.",
+        icon = "negotiation/grunt.tex",
+        min_persuasion = 6,
+        max_persuasion = 6,
+        murder_card = true,
+        must_loot = true,
+        rarity = CARD_RARITY.BASIC,
+        flags = CARD_FLAGS.STATUS | CARD_FLAGS.EXPEND,
+        cost = 1,
+        OnPostResolve = function( self, minigame, targets )
+            self.anti_negotiator:AddModifier("IMPATIENCE", 1, self )
+        end,
+        event_handlers = {
+            [ EVENT.CALC_PERSUASION ] = function ( self, source, persuasion )
+                if source == self then
+                    local count = self.negotiator:GetModifierStacks("DOMINANCE")
+                    persuasion:AddPersuasion( count, count, self )
+                end
+            end,
+        }
+    },
 }
 ---[[
 local MODIFIERS =

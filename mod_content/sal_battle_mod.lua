@@ -564,7 +564,7 @@ local attacks =
         desc = "Target ally immediately take <#UPGRADE>two of</> their action and prepare a new one.\n{CONDITIONAL_INCLUSION}: There are at least 1 active ally on the team.",
         playTimes = 2,
 
-    }
+    },
 }
 
 for i, id, data in sorted_pairs(attacks) do
