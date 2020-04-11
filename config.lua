@@ -1,26 +1,12 @@
 -- Settings for the mod
 return {
-    -- Set the field to "true" if you want to include this card to the game,
-    -- and "false" if you don't want to include this card.
-    -- In the future, this might be set up so that you can include custom parameters.
+    -- Specify whether to include a card or not by adding "card_id = true|false" in the following field
     enabled_cards = {
-        -- Negotiation Cards
-        ["back_down"] = true,
-        ["preach"] = true,
-        ["blackmail"] = true,
-        ["darvo"] = true,
-        ["fake_promise"] = true,
-        ["clairvoyance"] = true,
-        ["surprise_information"] = true,
-        ["violent_tendencies"] = true,
-        -- Battle Cards
-        ["bloodletting"] = true,
-        ["bodyguard"] = true,
-        ["critical_strike"] = true,
-        ["bullseye"] = true,
-        ["provoking_kick"] = true,
-        ["ailment_storm"] = true,
-        ["cover_fire"] = true,
-        ["baton_pass"] = true,
+        --back_down = true,
     },
+    -- Or if you are lazy, you can set the below to true to include everything.
+    -- If you want to exclude some cards, you have to manually set the field to true or false
+    enable_all_negotiation_cards = true,
+    enable_all_battle_cards = true,
+    enable_all_parasite_cards = true,
 }

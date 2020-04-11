@@ -544,7 +544,7 @@ for i, id, carddef in sorted_pairs( CARDS ) do
         carddef.series = CARD_SERIES.GENERAL
     end
     local basic_id = carddef.base_id or id:match( "(.*)_plus.*$" ) or id:match( "(.*)_upgraded[%w]*$") or id:match( "(.*)_supplemental.*$" )
-    if CONFIG.enabled_cards[id] or CONFIG.enabled_cards[basic_id] then
+    if CONFIG.enable_all_negotiation_cards or CONFIG.enabled_cards[id] or CONFIG.enabled_cards[basic_id] then
         Content.AddNegotiationCard( id, carddef )
     end
 end

@@ -82,7 +82,11 @@ LocationScreen.RefreshPlaxClickables = function( self, force )
             	local slot = self.plax:GetAgentSlot( agent )
             	local nameplate = slot and self.plax:GetSlotLabel( slot and slot.slot_id )
             	if nameplate then
-	                character_widget:SetOnHoverFn( function(hovered) nameplate:SetCharacterFocused( hovered ) end )
+                        character_widget:SetOnHoverFn( function(hovered) 
+                            if not nameplate.removed then
+                                nameplate:SetCharacterFocused( hovered or self.current_hover_agent == agent ) 
+                            end
+                        end)
             	end
 			end
         end

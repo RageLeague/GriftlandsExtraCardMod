@@ -572,7 +572,7 @@ for i, id, data in sorted_pairs(attacks) do
         data.series = CARD_SERIES.GENERAL
     end
     local basic_id = data.base_id or id:match( "(.*)_plus.*$" ) or id:match( "(.*)_upgraded[%w]*$") or id:match( "(.*)_supplemental.*$" )
-    if CONFIG.enabled_cards[id] or CONFIG.enabled_cards[basic_id] then
+    if CONFIG.enable_all_battle_cards or CONFIG.enabled_cards[id] or CONFIG.enabled_cards[basic_id] then
         Content.AddBattleCard( id, data )
     end
 end
