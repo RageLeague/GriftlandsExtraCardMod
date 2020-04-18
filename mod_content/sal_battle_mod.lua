@@ -49,7 +49,10 @@ local attacks =
                 if not attack:CheckHitResult( hit.target, "evaded" ) then
                     local initBleedCount = hit.target:GetConditionStacks("BLEED")
                     local bleed = hit.target:GetCondition("BLEED")
-                    bleed:AddApplicant(self)
+                    if bleed then
+                        -- Fix problem of when bleed is nil
+                        bleed:AddApplicant(self)
+                    end
                     while hit.target:GetConditionStacks("BLEED") > 0 and hit.target:IsAlive() do
                         local bleedStack = hit.target:GetConditionStacks("BLEED")
                         bleed.event_handlers[BATTLE_EVENT.BEGIN_TURN](bleed, hit.target)

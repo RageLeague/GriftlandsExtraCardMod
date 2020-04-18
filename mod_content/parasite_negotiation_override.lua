@@ -10,23 +10,23 @@ local CONFIG = require "RageLeagueExtraCardsMod:config"
 
 local function CreateDrawnHatcher(fn)
     local ret = function( self, card, source_deck, source_idx, target_deck, target_idx )
-                 if card == self and target_deck == self.engine:GetHandDeck() and source_deck == self.engine:GetDrawDeck() then
-                    self.engine:PushPostHandler( function()
-                        self:NotifyTriggeredPre()
-                        fn(self)
-                        --self.owner:ApplyDamage(1, self.owner, self)
-                        if self.engine then
-                            self:AddXP(1)
-                            if card:UpgradeReady() then
-                                if card.hatch_fn then 
-                                    card:hatch_fn(self.engine)
-                                end
-                            end
+            if card == self and target_deck == self.engine:GetHandDeck() and source_deck == self.engine:GetDrawDeck() then
+            self.engine:PushPostHandler( function()
+                self:NotifyTriggeredPre()
+                fn(self)
+                --self.owner:ApplyDamage(1, self.owner, self)
+                if self.engine then
+                    self:AddXP(1)
+                    if card:UpgradeReady() then
+                        if card.hatch_fn then 
+                            card:hatch_fn(self.engine)
                         end
-                        self:NotifyTriggeredPost()
-                    end )
+                    end
                 end
-            end
+                self:NotifyTriggeredPost()
+            end )
+        end
+    end
     return ret  
 end
 
