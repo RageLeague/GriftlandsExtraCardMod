@@ -2,7 +2,7 @@
 
 A mod for Griftlands. Adds some cards with interesting concepts to the game.
 
-It will be constantly updated.
+~~It will be constantly updated.~~ It will not be constantly updated.
 
 ## Install
 
